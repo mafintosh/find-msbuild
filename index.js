@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const { exec } = require('child_process')
+const exec = require('child_process').exec
 
 module.exports = msbuild
 
