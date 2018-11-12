@@ -9,39 +9,43 @@ function msbuild (cb) {
 
   const arch = process.arch === 'ia32' ? '' : '/reg:32'
 
-  exec(`reg query "HKLM\\Software\\Microsoft\\MSBuild\\ToolsVersions" /s ${arch}`, function (err, stdout) {
-    if (err) return cb(err)
+  exec('where msbuild.exe', function (err, stdout) {
+    if (!err && stdout) return cb(null, stdout.trim())
 
-    const candidates = stdout.split('\r\n\r\n')
-      .map(function (section) {
-        const path = (section.match(/[ \t]MSBuildToolsPath[ \t]+REG_SZ[ \t]+(.+)/m) || [])[1]
-        const versionString = (section.match(/ToolsVersions\\([^\\\r]+)/m) || [])[1]
-        const version = parseFloat(versionString, 10)
-        const dotNet = path && /Microsoft\.NET\\Framework\\/.test(path)
+    exec(`reg query "HKLM\\Software\\Microsoft\\MSBuild\\ToolsVersions" /s ${arch}`, function (err, stdout) {
+      if (err) return cb(err)
 
-        if (version >= 3.5 && path) return { path, version, dotNet }
-        return null
-      })
-      .filter(x => x)
-      .sort(sort)
+      const candidates = stdout.split('\r\n\r\n')
+        .map(function (section) {
+          const path = (section.match(/[ \t]MSBuildToolsPath[ \t]+REG_SZ[ \t]+(.+)/m) || [])[1]
+          const versionString = (section.match(/ToolsVersions\\([^\\\r]+)/m) || [])[1]
+          const version = parseFloat(versionString, 10)
+          const dotNet = path && /Microsoft\.NET\\Framework\\/.test(path)
 
-    loop()
+          if (version >= 3.5 && path) return { path, version, dotNet }
+          return null
+        })
+        .filter(x => x)
+        .sort(sort)
 
-    function loop () {
-      const next = candidates.pop()
-      if (!next) return cb(new Error('Could not find msbuild.exe'))
+      loop()
 
-      const msbuild = path.resolve(next.path, 'msbuild.exe')
+      function loop () {
+        const next = candidates.pop()
+        if (!next) return cb(new Error('Could not find msbuild.exe'))
 
-      fs.stat(msbuild, function (err) {
-        if (err) {
-          if (err.code === 'ENOENT') return loop()
-          return cb(err)
-        }
+        const msbuild = path.resolve(next.path, 'msbuild.exe')
 
-        cb(null, msbuild)
-      })
-    }
+        fs.stat(msbuild, function (err) {
+          if (err) {
+            if (err.code === 'ENOENT') return loop()
+            return cb(err)
+          }
+
+          cb(null, msbuild)
+        })
+      }
+    })
   })
 }
 
