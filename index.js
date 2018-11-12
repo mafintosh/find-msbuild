@@ -17,12 +17,13 @@ function msbuild (cb) {
         const path = (section.match(/[ \t]MSBuildToolsPath[ \t]+REG_SZ[ \t]+(.+)/m) || [])[1]
         const versionString = (section.match(/ToolsVersions\\([^\\\r]+)/m) || [])[1]
         const version = parseFloat(versionString, 10)
+        const dotNet = path && /Microsoft\.NET\\Framework\\/.test(path)
 
-        if (version >= 3.5 && path) return { path, version }
+        if (version >= 3.5 && path) return { path, version, dotNet }
         return null
       })
       .filter(x => x)
-      .sort((a, b) => b.version - a.version)
+      .sort(sort)
 
     loop()
 
@@ -42,4 +43,10 @@ function msbuild (cb) {
       })
     }
   })
+}
+
+function sort (a, b) {
+  if (a.dotNet && !b.dotNet) return -1
+  if (!a.dotNet && b.dotNet) return 1
+  return b.version - a.version
 }
