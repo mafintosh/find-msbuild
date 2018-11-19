@@ -1,6 +1,6 @@
 {
   "name": "find-msbuild",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Find your local msbuild.exe install. Useful when building on Windows",
   "main": "index.js",
   "dependencies": {},
