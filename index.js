@@ -5,7 +5,7 @@ const exec = require('child_process').exec
 module.exports = msbuild
 
 function msbuild (cb) {
-  if (process.platform !== 'win32') return process.nextTick(new Error('Only works on Windows'))
+  if (process.platform !== 'win32') return process.nextTick(cb, new Error('Only works on Windows'))
 
   const arch = process.arch === 'ia32' ? '' : '/reg:32'
 
